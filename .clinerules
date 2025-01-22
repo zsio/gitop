@@ -1,0 +1,5 @@
+本项目是基于github趋势项目，使用nodejs和cheerio库进行数据抓取，并使用typescript进行类型定义。
+
+项目分为两个程序：
+1. worker.ts 用于抓取github趋势数据，并保存。
+2. nextjs/tailwindcss 是 Web 项目，用于展示数据给用户。

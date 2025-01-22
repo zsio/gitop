@@ -1,7 +1,7 @@
 
 
 // 仓库数据
-export interface RepoData {
+export interface Repo {
   title?: string;
   description?: string;
   programmingLanguage?: string;
@@ -9,18 +9,35 @@ export interface RepoData {
   stargazers?: number;
   forks?: number;
   today_stargazers?: number;
+  url?: string;
+}
+
+export enum TrendingPeriod {
+  Daily = "daily",
+  Weekly = "weekly",
+  Monthly = "monthly",
 }
 
 // 常见编程语言枚举
-export enum ProgrammingLanguage {
-  JavaScript = "JavaScript",
-  TypeScript = "TypeScript",
-  Python = "Python",
-  Java = "Java",
-  C = "C",
-  Cpp = "C++",
-  Csharp = "C#",
-  Go = "Go",
-  Rust = "Rust",
-  Swift = "Swift",
+export enum CommonProgrammingLanguage {
+  Python = "python",
+  JavaScript = "javascript",
+  Java = "java",
+  Go = "go",
+  C = "c",
+  Cpp = "c++",
+  Csharp = "c#",
+  TypeScript = "typescript",
+  Rust = "rust",
+  Swift = "swift",
+  PHP = "php",
+  Ruby = "ruby",
+  Kotlin = "kotlin",
+  Dart = "dart",
+  Scala = "scala",
+  Shell = "shell",
+  ObjectiveC = "objective-c",
+  Haskell = "haskell",
+  R = "r",
+  Lua = "lua",
 }
