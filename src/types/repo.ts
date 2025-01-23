@@ -20,6 +20,7 @@ export enum TrendingPeriod {
 
 // 常见编程语言枚举
 export enum CommonProgrammingLanguage {
+  All = "all",
   Python = "python",
   JavaScript = "javascript",
   Java = "java",
@@ -37,7 +38,6 @@ export enum CommonProgrammingLanguage {
   Scala = "scala",
   Shell = "shell",
   ObjectiveC = "objective-c",
-  Haskell = "haskell",
   R = "r",
   Lua = "lua",
 }

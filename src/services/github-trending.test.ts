@@ -9,12 +9,12 @@ describe("GithubTrending buildUrl", () => {
   });
 
   it("should return base url without params", () => {
-    const url = githubTrending.buildUrl();
+    const url = githubTrending.buildUrl(TrendingPeriod.Daily, CommonProgrammingLanguage.All);
     expect(url).toBe("https://github.com/trending?since=daily");
   });
 
   it("should add since param", () => {
-    const url = githubTrending.buildUrl(TrendingPeriod.Daily);
+    const url = githubTrending.buildUrl(TrendingPeriod.Daily, CommonProgrammingLanguage.All);
     expect(url).toBe("https://github.com/trending?since=daily");
   });
 
