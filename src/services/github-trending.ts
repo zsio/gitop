@@ -5,7 +5,7 @@ import {
   InsertTrendingRepo,
 } from "@/db/schema";
 import db from "@/lib/pg";
-import { parseRepoData } from "@/parser/github-trending-parser";
+import { parseRepoData } from "@/lib/github-trending-parser";
 import { CommonProgrammingLanguage, TrendingPeriod } from "@/types/repo";
 import dayjs from "dayjs";
 

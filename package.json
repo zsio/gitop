@@ -10,7 +10,8 @@
     "tsx": "tsx",
     "test": "jest --watch",
     "db:push": "drizzle-kit push",
-    "worker": "tsx worker.ts"
+    "worker": "tsx worker.ts",
+    "pm2:start": "pm2 start worker.ts --name gitop-worker"
   },
   "dependencies": {
     "@animxyz/core": "^0.6.6",
