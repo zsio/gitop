@@ -92,7 +92,7 @@ export function Repos(props: { repos: SelectTrendingRepo[] }) {
                   <div className="flex items-center gap-1 ml-auto">
                     <span>
                       {repo.todayStargazers?.toLocaleString() ?? 0}{" "}
-                      <span className="text-muted-foreground">stars today</span>
+                      <span className="text-muted-foreground">stars {repo.filterSinces === "daily" ? "today" : `this ${repo.filterSinces}`}</span>
                     </span>
                   </div>
                 </div>

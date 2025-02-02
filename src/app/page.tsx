@@ -1,4 +1,5 @@
 
+import { format} from 'timeago.js';
 import { getRepos } from "@/actions/repos";
 
 import { TrendingTabs } from "@/components/custom/trending-tabs";
@@ -21,6 +22,8 @@ export default async function Home(props: IProps) {
   const language = params.language || "all";
   const repos = await getRepos(date, language);
   
+  const lastUpdateTime = repos?.[0]?.createdAt;
+  const lastUpdateTimeText = lastUpdateTime ? format(lastUpdateTime) : "";
 
   return (
     <div className="py-4">
@@ -30,6 +33,11 @@ export default async function Home(props: IProps) {
       <main className={`${containerWidthClassName}`}>
         <Repos repos={repos} />
       </main>
+      <footer className="py-2">
+        <div className="flex items-center justify-center">
+          <p className="text-sm text-muted-foreground">Updated at {lastUpdateTimeText}</p>
+        </div>
+      </footer>
     </div>
   );
 }
