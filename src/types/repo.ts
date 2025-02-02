@@ -1,17 +1,5 @@
 
 
-// 仓库数据
-export interface Repo {
-  title?: string;
-  description?: string;
-  programmingLanguage?: string;
-  repo_language_color?: string;
-  stargazers?: number;
-  forks?: number;
-  today_stargazers?: number;
-  url?: string;
-}
-
 export enum TrendingPeriod {
   Daily = "daily",
   Weekly = "weekly",
@@ -35,9 +23,8 @@ export enum CommonProgrammingLanguage {
   Ruby = "ruby",
   Kotlin = "kotlin",
   Dart = "dart",
+  ObjectiveC = "objective-c",
+  Lua = "lua",
   Scala = "scala",
   Shell = "shell",
-  ObjectiveC = "objective-c",
-  R = "r",
-  Lua = "lua",
 }

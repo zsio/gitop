@@ -1,21 +1,22 @@
-import { uniqBy } from "es-toolkit";
-import { reposTable, tasksTable, trendingRecordsTable } from "@/db/schema";
-import db from "@/libs/pg";
+import { desc, eq } from "drizzle-orm";
+import {
+  trendingTasksTable,
+  trendingReposTable,
+  InsertTrendingRepo,
+} from "@/db/schema";
+import db from "@/lib/pg";
 import { parseRepoData } from "@/parser/github-trending-parser";
-import { CommonProgrammingLanguage, Repo, TrendingPeriod } from "@/types/repo";
+import { CommonProgrammingLanguage, TrendingPeriod } from "@/types/repo";
 import dayjs from "dayjs";
-import { eq, sql } from "drizzle-orm";
+
+export const mirror_url = ["https://bgithub.xyz", "https://github.xiaohei.me"];
 
 export class GithubTrending {
   private url: string = "https://github.com/trending";
-  private mirror_url: string[] = ["https://bgithub.xyz", "https://github.xiaohei.me"];
   private proxys: string[] = ["https://ghfast.top/", "https://gh-proxy.com/"];
   private sinces: TrendingPeriod[] = Object.values(TrendingPeriod);
 
-  public buildUrl(
-    sinces: TrendingPeriod = TrendingPeriod.Daily,
-    language: CommonProgrammingLanguage
-  ): string {
+  public buildUrl(sinces: string, language: string): string {
     const url = new URL(this.url);
     if (language !== CommonProgrammingLanguage.All) {
       url.pathname = `${url.pathname}/${language}`;
@@ -27,22 +28,17 @@ export class GithubTrending {
   }
 
   public async fetchTrendingHtml(
-    sinces: TrendingPeriod = TrendingPeriod.Daily,
-    language: CommonProgrammingLanguage
+    sinces: string = TrendingPeriod.Daily,
+    language: string
   ): Promise<string> {
     const url = this.buildUrl(sinces, language);
     let html = "";
 
-    for (const mirror of this.mirror_url) {
-      const trending_url = url.replace('https://github.com', mirror);
-      const response = await fetch(trending_url);
-      if (!response.ok) {
-        console.error(`${trending_url}请求失败`);
-        continue;
-      }
-      html = await response.text();
-      break;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error("Failed to fetch trending repos");
     }
+    html = await response.text();
 
     if (!html) {
       throw new Error("Failed to fetch trending repos");
@@ -52,106 +48,89 @@ export class GithubTrending {
   }
 
   public async fetchTrendingRepos(
-    sinces: TrendingPeriod = TrendingPeriod.Daily,
-    language: CommonProgrammingLanguage
-  ): Promise<Repo[]> {
-    let retryCount = 0;
-    const maxRetries = 3;
-    const retryDelay = 3000;
-    while (retryCount < maxRetries) {
-      try {
-        const html = await this.fetchTrendingHtml(sinces, language);
-        return parseRepoData(html);
-      } catch (error) {
-        retryCount++;
-        if (retryCount === maxRetries) {
-          console.error("请求仓库失败\n", error);
-          return [];
-        }
-        await new Promise(resolve => setTimeout(resolve, retryDelay));
-      }
-    }
-    return [];
+    sinces: string = TrendingPeriod.Daily,
+    language: string,
+    taskId: number
+  ): Promise<InsertTrendingRepo[]> {
+    const html = await this.fetchTrendingHtml(sinces, language);
+    return parseRepoData(html, taskId, sinces, language);
   }
 
-  public async run() {
+  public async startTask(): Promise<number | undefined> {
+    // 查询最新任务的创建时间
+    const lastTask = await db.query.trendingTasksTable.findFirst({
+      orderBy: desc(trendingTasksTable.createdAt),
+    });
 
-    // 创建任务
-    const task = await db.insert(tasksTable).values({
-      name: dayjs().format('YYYY-MM-DD HH:mm:ss'),
-      status: 'pending',
-      created_at: new Date(),
-      updated_at: new Date(),
-    }).returning();
-
-    if (!task[0].id) {
-      throw new Error('创建任务失败');
+    if (lastTask) {
+      const lastCreatedAt = lastTask.createdAt;
+      const twoHoursAgo = new Date(Date.now() - 2 * 60 * 60 * 1000);
+      if (lastCreatedAt > twoHoursAgo) {
+        console.log(`距离上次任务未超过2小时，跳过本次任务。${lastCreatedAt}`);
+        return
+      }
     }
 
-    const task_id = task[0].id;
+    const task = await db
+      .insert(trendingTasksTable)
+      .values({
+        name: dayjs().format("YYYY-MM-DD HH:mm:ss"),
+        status: "pending",
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      })
+      .returning();
+    return task?.[0]?.id;
+  }
 
-    const all_languages = [CommonProgrammingLanguage.All];
+  public async run(taskId: number) {
+
+    const all_languages = [
+      CommonProgrammingLanguage.All,
+      CommonProgrammingLanguage.JavaScript,
+    ];
     for (const language of all_languages) {
       const all_promises = [];
       for (const sinces of this.sinces) {
-        all_promises.push(this.fetchTrendingRepos(sinces, language));
+        all_promises.push(this.fetchTrendingRepos(sinces, language, taskId));
       }
-      const [daily_repos, weekly_repos, monthly_repos] = await Promise.all(all_promises);
-      // 插入数据
-      const all_repos = [
-        ...daily_repos.map(repo => ({
-          task_id,
-          language: repo.programmingLanguage || '',
-          sinces: TrendingPeriod.Daily,
-          created_at: new Date()
-        })),
-        ...weekly_repos.map(repo => ({
-          task_id,
-          language: repo.programmingLanguage || '',
-          sinces: TrendingPeriod.Weekly,
-          created_at: new Date()
-        })),
-        ...monthly_repos.map(repo => ({
-          task_id,
-          language: repo.programmingLanguage || '',
-          sinces: TrendingPeriod.Monthly,
-          created_at: new Date()
-        }))
-      ];
-      await db.insert(trendingRecordsTable).values(all_repos).onConflictDoNothing();
+      const [daily_repos, weekly_repos, monthly_repos] = await Promise.all(
+        all_promises
+      );
 
       // 插入所有仓库数据
-      const all_repos_data = uniqBy([...daily_repos, ...weekly_repos, ...monthly_repos], repo => repo.title)
-        .map(repo => ({
-          task_id,
-          name: repo.title || '',
-          description: repo.description || '', 
-          programmingLanguage: repo.programmingLanguage || '',
-          stargazers: repo.stargazers || 0,
-          forks: repo.forks || 0,
-          today_stargazers: repo.today_stargazers || 0,
-          created_at: new Date()
-        }));
+      const all_repos_data = [
+        ...daily_repos,
+        ...weekly_repos,
+        ...monthly_repos,
+      ];
 
-      console.log(`插入 ${all_repos_data.length} 条数据, 任务ID: ${task_id}\n 其中：\ndaily: ${daily_repos.length}, weekly: ${weekly_repos.length}, monthly: ${monthly_repos.length}`);
+      console.log(
+        `插入 ${all_repos_data.length} 条数据, 任务ID: ${taskId}\n 其中：\ndaily: ${daily_repos.length}, weekly: ${weekly_repos.length}, monthly: ${monthly_repos.length}`
+      );
+
+      console.log(all_repos_data);
 
       try {
-        const inserted_repos = await db.insert(reposTable)
+        const inserted_repos = await db
+          .insert(trendingReposTable)
           .values(all_repos_data)
           .onConflictDoNothing()
           .returning();
         console.log(`实际插入到 repos 表的记录数：${inserted_repos.length}`);
       } catch (error) {
-        console.error('插入数据时发生错误：', error);
+        console.error("插入数据时发生错误：", error);
         throw error;
       }
     }
 
     // 更新任务状态
-    await db.update(tasksTable).set({
-      status: 'completed',
-      updated_at: new Date(),
-    }).where(eq(tasksTable.id, task_id));
+    await db
+      .update(trendingTasksTable)
+      .set({
+        status: "done",
+        updatedAt: new Date(),
+      })
+      .where(eq(trendingTasksTable.id, taskId));
   }
-
 }

@@ -1,4 +1,4 @@
-import { RepoData } from "@/types/repo";
+import { InsertTrendingRepo } from "@/db/schema";
 import * as cheerio from "cheerio";
 
 // 添加一个辅助函数来提取数字
@@ -8,11 +8,11 @@ function extractNumber(str: string): number {
   return parseInt(matches.join(""));
 }
 
-export function parseRepoData(html: string): RepoData[] {
+export function parseRepoData(html: string, taskId: number, sinces: string, language: string): InsertTrendingRepo[] {
   const $ = cheerio.load(html);
   const $rows = $(".Box .Box-row");
 
-  const repoData: RepoData[] = [];
+  const repoData: InsertTrendingRepo[] = [];
 
   $rows.each((index, element) => {
     const $row = $(element);
@@ -26,9 +26,12 @@ export function parseRepoData(html: string): RepoData[] {
       .find('span[itemprop="programmingLanguage"]')
       .text();
 
-    const repo_language_color = $row
+    const repoLanguageColor = $row
       .find("span.repo-language-color")
-      .attr("style");
+      .attr("style")
+      ?.match(/background-color:\s*([^;]+)/)?.[1]
+      ?.trim() || null;
+      
 
     const octicon_star = $row.find(".octicon-star").parent("a").text();
     const stargazers = extractNumber(octicon_star);
@@ -42,16 +45,26 @@ export function parseRepoData(html: string): RepoData[] {
       .text();
     const today_stargazers = extractNumber(today_star);
 
+    const user = trimmedTitle.split("/")[0];
+    const name = trimmedTitle.split("/")[1];
+
     repoData.push({
-      title: trimmedTitle,
+      user,
+      name,
+      taskId: taskId,
+      filterLanguage: language,
+      filterSinces: sinces,
       description,
       programmingLanguage,
-      repo_language_color,
+      repoLanguageColor: repoLanguageColor || '',
       stargazers,
       forks,
-      today_stargazers,
-    });
+      todayStargazers: today_stargazers,
+      order: index,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+    })
   });
 
-  return repoData;
+  return repoData as InsertTrendingRepo[];
 } 
