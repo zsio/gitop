@@ -71,7 +71,7 @@ export function Repos(props: { repos: SelectTrendingRepo[] }) {
                   </p>
                 </div>
 
-                <div className="flex items-center gap-4 text-sm">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   {repo.programmingLanguage && (
                     <div className="flex items-center gap-1">
                       <LanguageColorDot color={repo.repoLanguageColor} />
