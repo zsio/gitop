@@ -6,7 +6,7 @@ import { Repos } from "@/components/custom/repos";
 import { CommonProgrammingLanguage, TrendingPeriod } from "@/types/repo";
 import { redirect } from "next/navigation";
 
-export const revalidate = 60 * 2;
+export const revalidate = 60;
 
 export async function generateStaticParams() {
     const dates = Object.values(TrendingPeriod);
@@ -22,19 +22,16 @@ export async function generateStaticParams() {
     );
 }
 
-
-
 export default async function Page(props: {
-    params: {
+    params: Promise<{
         date: string;
         language: string;
-    };
+    }>;
 }) {
     const containerWidthClassName =
         "px-4 w-full sm:w-[600px] md:w-[700px] lg:w-[1000px] xl:w-[1200px] m-auto pb-0";
 
     const params = await props.params;
-
     const date = params.date;
     const language = params.language;
 
