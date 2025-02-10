@@ -12,12 +12,12 @@ export function TrendingTabs() {
   const router = useRouter();
   const params = useParams();
 
-  const [sinces, setSinces] = useState(params.date as TrendingPeriod || TrendingPeriod.Daily);
-  const [language, setLanguage] = useState(params.language as CommonProgrammingLanguage || CommonProgrammingLanguage.All);
+  const [sinces, setSinces] = useState(decodeURIComponent(params.date as TrendingPeriod || TrendingPeriod.Daily));
+  const [language, setLanguage] = useState(decodeURIComponent(params.language as CommonProgrammingLanguage || CommonProgrammingLanguage.All));
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    url.pathname = `/${sinces}/${language}`;
+    url.pathname = `/${encodeURIComponent(sinces)}/${encodeURIComponent(language)}`;
     router.push(url.pathname);    
   }, [router, sinces, language]);
 

@@ -32,8 +32,8 @@ export default async function Page(props: {
         "px-4 w-full sm:w-[600px] md:w-[700px] lg:w-[1000px] xl:w-[1200px] m-auto pb-0";
 
     const params = await props.params;
-    const date = params.date;
-    const language = params.language;
+    const date = decodeURIComponent(params.date);
+    const language = decodeURIComponent(params.language);
 
     if (!Object.values(TrendingPeriod).includes(date as TrendingPeriod)) {
         return redirect(`/${TrendingPeriod.Daily}/all`);
