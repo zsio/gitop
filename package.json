@@ -25,6 +25,8 @@
     "@radix-ui/react-radio-group": "^1.2.2",
     "@radix-ui/react-slot": "^1.1.1",
     "@radix-ui/react-tabs": "^1.1.2",
+    "@vercel/analytics": "^1.4.1",
+    "@vercel/speed-insights": "^1.1.0",
     "ai": "^4.1.16",
     "axios": "^1.7.9",
     "bullmq": "^5.37.0",

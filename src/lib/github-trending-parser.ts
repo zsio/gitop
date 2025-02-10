@@ -1,5 +1,8 @@
 import { InsertTrendingRepo } from "@/db/schema";
+import { generateObject } from "ai";
 import * as cheerio from "cheerio";
+import { liaobots } from "./llms";
+import { z } from "zod";
 
 // 添加一个辅助函数来提取数字
 function extractNumber(str: string): number {
@@ -68,3 +71,50 @@ export function parseRepoData(html: string, taskId: number, sinces: string, lang
 
   return repoData as InsertTrendingRepo[];
 } 
+
+
+export async function summarizeGithubRepo(
+  repoName: string,
+  desc: string,
+  readmeMarkdown: string,
+  language: string = "zh-CN"
+) {
+  const prompt = `
+**任务说明**
+你是一个专业的开源项目分析助手，需要完成以下两个结构化任务：
+
+### 任务1：根据 description 和 readme.md 内容，生成一个简短的仓库说明
+三五句话总结这个仓库的用途。
+
+### 任务2：根据 readme.md 和 description，生成一个详细的仓库说明
+为开发者提供一个详细的仓库说明，帮助他们了解这个仓库的用途、特点、优势、适用场景等。
+
+仓库名称：${repoName}
+
+仓库的 description：
+"""
+${desc}
+"""
+
+仓库的 README.md 内容:
+----------
+${readmeMarkdown}
+----------
+
+
+注意：生成的结果中，除了专有名词，都需要使用 ${language} 语言。
+`;
+  const res = await generateObject({
+    model: liaobots("gpt-4o-mini"),  // gpt-4o-mini   o1-mini  claude-3-5-sonnet-20241022  gemini-2.0-flash-exp
+    prompt,
+    maxTokens: 600,
+    temperature: 0.8,
+    schemaName: "summary-github-repo",
+    schemaDescription: "仓库的简要说明和详细说明",
+    schema: z.object({
+      description: z.string().describe("仓库的简要说明"),
+      summary: z.string().describe("仓库的详细说明"),
+    }),
+  });
+  return res;
+}

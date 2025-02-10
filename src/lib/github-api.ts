@@ -209,6 +209,33 @@ export async function getRepoLogoUrl(
   return data.avatar_url;
 }
 
+
+
+
+/**
+ * 获取仓库的 README 文件内容
+ * @param repo - 仓库名称，格式为 "owner/repo"
+ * @param token - 可选的 GitHub API 访问令牌
+ * @returns Promise<string> - 返回 README 文件的原始内容
+ * @description 
+ * - 使用 GitHub API 获取仓库的 README 文件
+ * - 返回的是原始的 markdown 格式内容
+ * - 如果仓库没有 README 文件，API 会返回 404 错误
+ * - 默认获取主分支上的 README 文件
+ */
+export async function getRepoReadme(repo: string, token?: string) {
+  const { data } = await axios.get<string>(`https://api.github.com/repos/${repo}/readme`, {
+    headers: {
+      Accept: "application/vnd.github.raw+json",
+      Authorization: token ? `token ${token}` : "",
+    },
+  });
+
+  return data;
+}
+
+
+
 /**
  * GitHub API 方法集合
  * @namespace
@@ -218,6 +245,7 @@ export const api = {
   getRepoStargazersInfo,
   getRepoStarRecords,
   getRepoLogoUrl,
+  getRepoReadme,
 };
 
 export default api;

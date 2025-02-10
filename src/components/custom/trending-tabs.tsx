@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from "react";
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useParams } from "next/navigation";
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { ModeToggle } from "@/components/custom/switch-dark";
@@ -10,17 +10,17 @@ import { CommonProgrammingLanguage, TrendingPeriod } from "@/types/repo";
 
 export function TrendingTabs() {
   const router = useRouter();
-  const searchParams = useSearchParams();
+  const params = useParams();
 
-  const [sinces, setSinces] = useState(searchParams.get("sinces") || TrendingPeriod.Daily);
-  const [language, setLanguage] = useState(searchParams.get("language") || CommonProgrammingLanguage.All);
+  const [sinces, setSinces] = useState(params.date as TrendingPeriod || TrendingPeriod.Daily);
+  const [language, setLanguage] = useState(params.language as CommonProgrammingLanguage || CommonProgrammingLanguage.All);
 
   useEffect(() => {
     const url = new URL(window.location.href);
-    url.searchParams.set('sinces', sinces);
-    url.searchParams.set('language', language);
-    router.push(url.pathname + url.search);
+    url.pathname = `/${sinces}/${language}`;
+    router.push(url.pathname);    
   }, [router, sinces, language]);
+
 
   return (
     <div className="flex flex-col gap-2 bg-accent p-2 border-x border-t relative">
